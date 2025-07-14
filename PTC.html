@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Change Tracking System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white min-h-screen p-4 sm:p-6">
+    <div class="container max-w-7xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <header class="bg-blue-600 text-white p-8 text-center relative">
+            <h1 class="text-3xl sm:text-4xl font-light tracking-wide">Project Change Tracking System</h1>
+            <div class="absolute top-8 right-8 flex gap-2">
+                <button class="nav-btn bg-white/20 text-white border-2 border-white/30 px-4 py-2 rounded-full font-semibold text-sm hover:bg-blue-500 hover:border-white transition-all duration-300 active:bg-white active:text-blue-600" onclick="showPage('new-meeting')">New Meeting</button>
+                <button class="nav-btn bg-white/20 text-white border-2 border-white/30 px-4 py-2 rounded-full font-semibold text-sm hover:bg-blue-500 hover:border-white transition-all duration-300" onclick="showPage('meeting-history')">Meeting History</button>
+            </div>
+        </header>
+
+        <!-- New Meeting Page -->
+        <div id="new-meeting" class="page-section p-6 sm:p-10 active">
+            <h2 class="text-2xl font-semibold text-blue-800 border-b-2 border-blue-500 pb-3 mb-8">Meeting Information</h2>
+            
+            <div class="success-message hidden bg-blue-100 text-blue-700 p-4 rounded-lg border-l-4 border-blue-500 mb-6" id="success-message">
+                Meeting saved successfully! You can view it in the Meeting History.
+            </div>
+            
+            <div class="flex flex-wrap gap-6 mb-8">
+                <div class="flex-1 min-w-[250px]">
+                    <label for="project" class="block font-semibold text-blue-700 mb-2">Project:</label>
+                    <div class="flex gap-2">
+                        <select id="project" class="flex-1 p-3 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" onchange="handleProjectChange()">
+                            <option value="">Select Project</option>
+                        </select>
+                        <button type="button" class="add-btn bg-blue-500 text-white w-12 h-12 rounded-lg flex items-center justify-center font-bold text-xl hover:bg-blue-600 hover:shadow-lg transition-all duration-300" onclick="showAddForm('project')">+</button>
+                    </div>
+                </div>
+
+                <div class="flex-1 min-w-[250px]">
+                    <label for="client" class="block font-semibold text-blue-700 mb-2">Client Name:</label>
+                    <div class="flex gap-2">
+                        <select id="client" class="flex-1 p-3 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" onchange="handleClientChange()">
+                            <option value="">Select Client</option>
+                        </select>
+                        <button type="button" class="add-btn bg-blue-500 text-white w-12 h-12 rounded-lg flex items-center justify-center font-bold text-xl hover:bg-blue-600 hover:shadow-lg transition-all duration-300" onclick="showAddForm('client')">+</button>
+                    </div>
+                </div>
+
+                <div class="flex-1 min-w-[250px]">
+                    <label for="date" class="block font-semibold text-blue-700 mb-2">Date:</label>
+                    <input type="date" id="date" class="w-full p-3 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" onchange="handleDateChange()">
+                </div>
+            </div>
+
+            <div id="changes-section" class="hidden">
+                <h2 class="text-2xl font-semibold text-blue-800 border-b-2 border-blue-500 pb-3 mb-8">Project Changes</h2>
+                
+                <div class="change-form bg-blue-50 p-6 rounded-lg border border-blue-200 mb-8">
+                    <div class="flex flex-wrap gap-6 mb-6">
+                        <div class="flex-1 min-w-[250px]">
+                            <label for="module" class="block font-semibold text-blue-700 mb-2">Module:</label>
+                            <div class="flex gap-2">
+                                <select id="module" class="flex-1 p-3 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" onchange="handleModuleChange()">
+                                    <option value="">Select Module</option>
+                                </select>
+                                <button type="button" class="add-btn bg-blue-500 text-white w-12 h-12 rounded-lg flex items-center justify-center font-bold text-xl hover:bg-blue-600 hover:shadow-lg transition-all duration-300" onclick="showAddForm('module')">+</button>
+                            </div>
+                        </div>
+
+                        <div class="flex-1 min-w-[250px]">
+                            <label for="submodule" class="block font-semibold text-blue-700 mb-2">Sub-Module:</label>
+                            <div class="flex gap-2">
+                                <select id="submodule" class="flex-1 p-3 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" onchange="handleSubModuleChange()">
+                                    <option value="">Select Sub-Module</option>
+                                </select>
+                                <button type="button" class="add-btn bg-blue-500 text-white w-12 h-12 rounded-lg flex items-center justify-center font-bold text-xl hover:bg-blue-600 hover:shadow-lg transition-all duration-300" onclick="showAddForm('submodule')">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label for="change-description" class="block font-semibold text-blue-700 mb-2">Change Description:</label>
+                        <textarea id="change-description" rows="4" class="w-full p-3 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" placeholder="Describe the change in detail..."></textarea>
+                    </div>
+
+                    <button type="button" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 hover:shadow-lg transition-all duration-300" onclick="addChange()">Add Change</button>
+                </div>
+
+                <div id="changes-list" class="mb-8">
+                    <h3 class="text-xl font-semibold text-blue-800 mb-4">Changes Added This Meeting:</h3>
+                    <div id="changes-container"></div>
+                </div>
+
+                <div class="actions text-center p-6 bg-blue-50 rounded-lg">
+                    <button type="button" class="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 hover:shadow-lg transition-all duration-300 mr-2" onclick="saveMeeting()">Save Meeting</button>
+                    <button type="button" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 hover:shadow-lg transition-all duration-300 mr-2" onclick="generateCurrentReport()">Generate Report</button>
+                    <button type="button" class="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-800 hover:shadow-lg transition-all duration-300" onclick="downloadCurrentCSV()">Download CSV</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Meeting History Page -->
+        <div id="meeting-history" class="page-section p-6 sm:p-10 hidden">
+            <h2 class="text-2xl font-semibold text-blue-800 border-b-2 border-blue-500 pb-3 mb-8">Meeting History</h2>
+            <div id="meetings-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <div id="no-meetings" class="text-center p-16 text-blue-500 hidden">
+                <h3 class="text-xl font-semibold mb-2">No meetings found</h3>
+                <p>Start by creating your first meeting in the "New Meeting" section.</p>
+            </div>
+        </div>
+
+        <!-- Add Forms Modal -->
+        <div id="modal" class="modal fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-[1000] flex items-center justify-center">
+            <div class="modal-content bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-y-auto">
+                <span class="close absolute top-4 right-6 text-blue-400 text-2xl font-bold cursor-pointer hover:text-blue-600 transition-colors" onclick="closeModal()">×</span>
+                <h3 id="modal-title" class="text-xl font-semibold text-blue-800 mb-6"></h3>
+                <div class="mb-6">
+                    <label id="modal-label" class="block font-semibold text-blue-700 mb-2"></label>
+                    <input type="text" id="modal-input" class="w-full p-3 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" placeholder="">
+                </div>
+                <div class="text-right">
+                    <button type="button" class="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 hover:shadow-lg transition-all duration-300 mr-2" onclick="closeModal()">Cancel</button>
+                    <button type="button" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 hover:shadow-lg transition-all duration-300" onclick="saveNewItem()">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Modal -->
+        <div id="report-modal" class="modal fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-[1000] flex items-center justify-center">
+            <div class="modal-content bg-white p-8 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+                <span class="close absolute top-4 right-6 text-blue-400 text-2xl font-bold cursor-pointer hover:text-blue-600 transition-colors" onclick="closeReportModal()">×</span>
+                <h3 class="text-xl font-semibold text-blue-800 mb-6">Meeting Report</h3>
+                <div id="report-content"></div>
+                <div class="text-right mt-6">
+                    <button type="button" class="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 hover:shadow-lg transition-all duration-300 mr-2" onclick="closeReportModal()">Close</button>
+                    <button type="button" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 hover:shadow-lg transition-all duration-300" onclick="printReport()">Print</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Meeting Details Modal -->
+        <div id="meeting-details-modal" class="modal fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-[1000] flex items-center justify-center">
+            <div class="modal-content bg-white p-8 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+                <span class="close absolute top-4 right-6 text-blue-400 text-2xl font-bold cursor-pointer hover:text-blue-600 transition-colors" onclick="closeMeetingDetailsModal()">×</span>
+                <h3 class="text-xl font-semibold text-blue-800 mb-6">Meeting Details</h3>
+                <div id="meeting-details-content"></div>
+                <div class="text-right mt-6">
+                    <button type="button" class="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 hover:shadow-lg transition-all duration-300 mr-2" onclick="closeMeetingDetailsModal()">Close</button>
+                    <button type="button" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 hover shadowy-lg transition-all duration-300 mr-2" onclick="generateReportFromDetails()">Generate Report</button>
+                    <button type="button" class="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-800 hover:shadow-lg transition-all duration-300" onclick="downloadCSVFromDetails()">Download CSV</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data storage
+        let projects = [];
+        let clients = [];
+        let modules = [];
+        let submodules = [];
+        let currentChanges = [];
+        let meetings = [];
+        let currentModalType = '';
+        let currentMeetingForReport = null;
+
+        // Initialize data
+        function initializeData() {
+            projects = JSON.parse(localStorage.getItem('projects')) || [
+                { id: 1, name: 'E-commerce Website' },
+                { id: 2, name: 'Mobile App Development' },
+                { id: 3, name: 'CRM System' }
+            ];
+            
+            clients = JSON.parse(localStorage.getItem('clients')) || [
+                { id: 1, name: 'ABC Corporation' },
+                { id: 2, name: 'XYZ Industries' },
+                { id: 3, name: 'Tech Solutions Inc' }
+            ];
+            
+            modules = JSON.parse(localStorage.getItem('modules')) || [
+                { id: 1, name: 'User Authentication', projectId: 1 },
+                { id: 2, name: 'Product Management', projectId: 1 },
+                { id: 3, name: 'Payment Gateway', projectId: 1 },
+                { id: 4, name: 'User Interface', projectId: 2 },
+                { id: 5, name: 'Database', projectId: 3 }
+            ];
+            
+            submodules = JSON.parse(localStorage.getItem('submodules')) || [
+                { id: 1, name: 'Login System', moduleId: 1 },
+                { id: 2, name: 'Registration', moduleId: 1 },
+                { id: 3, name: 'Product Catalog', moduleId: 2 },
+                { id: 4, name: 'Shopping Cart', moduleId: 2 },
+                { id: 5, name: 'Stripe Integration', moduleId: 3 },
+                { id: 6, name: 'PayPal Integration', moduleId: 3 }
+            ];
+
+            meetings = JSON.parse(localStorage.getItem('meetings')) || [];
+            
+            populateDropdowns();
+            displayMeetings();
+        }
+
+        // Page navigation
+        function showPage(pageId) {
+            document.querySelectorAll('.page-section').forEach(page => {
+                page.classList.add('hidden');
+            });
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById(pageId).classList.remove('hidden');
+            event.target.classList.add('active');
+
+            if (pageId === 'meeting-history') {
+                displayMeetings();
+            }
+        }
+
+        // Populate dropdown menus
+        function populateDropdowns() {
+            populateProjects();
+            populateClients();
+        }
+
+        function populateProjects() {
+            const projectSelect = document.getElementById('project');
+            projectSelect.innerHTML = '<option value="">Select Project</option>';
+            projects.forEach(project => {
+                const option = document.createElement('option');
+                option.value = project.id;
+                option.textContent = project.name;
+                projectSelect.appendChild(option);
+            });
+        }
+
+        function populateClients() {
+            const clientSelect = document.getElementById('client');
+            clientSelect.innerHTML = '<option value="">Select Client</option>';
+            clients.forEach(client => {
+                const option = document.createElement('option');
+                option.value = client.id;
+                option.textContent = client.name;
+                clientSelect.appendChild(option);
+            });
+        }
+
+        function populateModules() {
+            const moduleSelect = document.getElementById('module');
+            const projectId = parseInt(document.getElementById('project').value);
+            
+            moduleSelect.innerHTML = '<option value="">Select Module</option>';
+            
+            if (projectId) {
+                const projectModules = modules.filter(module => module.projectId === projectId);
+                projectModules.forEach(module => {
+                    const option = document.createElement('option');
+                    option.value = module.id;
+                    option.textContent = module.name;
+                    moduleSelect.appendChild(option);
+                });
+            }
+        }
+
+        function populateSubmodules() {
+            const submoduleSelect = document.getElementById('submodule');
+            const moduleId = parseInt(document.getElementById('module').value);
+            
+            submoduleSelect.innerHTML = '<option value="">Select Sub-Module</option>';
+            
+            if (moduleId) {
+                const moduleSubmodules = submodules.filter(submodule => submodule.moduleId === moduleId);
+                moduleSubmodules.forEach(submodule => {
+                    const option = document.createElement('option');
+                    option.value = submodule.id;
+                    option.textContent = submodule.name;
+                    submoduleSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Event handlers
+        function handleProjectChange() {
+            populateModules();
+            document.getElementById('submodule').innerHTML = '<option value="">Select Sub-Module</option>';
+            checkFormCompletion();
+        }
+
+        function handleClientChange() {
+            checkFormCompletion();
+        }
+
+        function handleDateChange() {
+            checkFormCompletion();
+        }
+
+        function handleModuleChange() {
+            populateSubmodules();
+        }
+
+        function handleSubModuleChange() {}
+
+        function checkFormCompletion() {
+            const project = document.getElementById('project').value;
+            const client = document.getElementById('client').value;
+            const date = document.getElementById('date').value;
+            
+            document.getElementById('changes-section').classList.toggle('hidden', !(project && client && date));
+            if (project && client && date) {
+                populateModules();
+            }
+        }
+
+        // Modal functions
+        function showAddForm(type) {
+            currentModalType = type;
+            const modal = document.getElementById('modal');
+            const title = document.getElementById('modal-title');
+            const label = document.getElementById('modal-label');
+            const input = document.getElementById('modal-input');
+            
+            switch(type) {
+                case 'project':
+                    title.textContent = 'Add New Project';
+                    label.textContent = 'Project Name:';
+                    input.placeholder = 'Enter project name';
+                    break;
+                case 'client':
+                    title.textContent = 'Add New Client';
+                    label.textContent = 'Client Name:';
+                    input.placeholder = 'Enter client name';
+                    break;
+                case 'module':
+                    title.textContent = 'Add New Module';
+                    label.textContent = 'Module Name:';
+                    input.placeholder = 'Enter module name';
+                    break;
+                case 'submodule':
+                    title.textContent = 'Add New Sub-Module';
+                    label.textContent = 'Sub-Module Name:';
+                    input.placeholder = 'Enter sub-module name';
+                    break;
+            }
+            
+            input.value = '';
+            modal.classList.remove('hidden');
+            input.focus();
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+            currentModalType = '';
+        }
+
+        function saveNewItem() {
+            const input = document.getElementById('modal-input');
+            const name = input.value.trim();
+            
+            if (!name) {
+                alert('Please enter a name');
+                return;
+            }
+            
+            switch(currentModalType) {
+                case 'project':
+                    const newProject = {
+                        id: Date.now(),
+                        name: name
+                    };
+                    projects.push(newProject);
+                    localStorage.setItem('projects', JSON.stringify(projects));
+                    populateProjects();
+                    document.getElementById('project').value = newProject.id;
+                    break;
+                    
+                case 'client':
+                    const newClient = {
+                        id: Date.now(),
+                        name: name
+                    };
+                    clients.push(newClient);
+                    localStorage.setItem('clients', JSON.stringify(clients));
+                    populateClients();
+                    document.getElementById('client').value = newClient.id;
+                    break;
+                    
+                case 'module':
+                    const projectId = parseInt(document.getElementById('project').value);
+                    if (!projectId) {
+                        alert('Please select a project first');
+                        return;
+                    }
+                    const newModule = {
+                        id: Date.now(),
+                        name: name,
+                        projectId: projectId
+                    };
+                    modules.push(newModule);
+                    localStorage.setItem('modules', JSON.stringify(modules));
+                    populateModules();
+                    document.getElementById('module').value = newModule.id;
+                    break;
+                    
+                case 'submodule':
+                    const moduleId = parseInt(document.getElementById('module').value);
+                    if (!moduleId) {
+                        alert('Please select a module first');
+                        return;
+                    }
+                    const newSubmodule = {
+                        id: Date.now(),
+                        name: name,
+                        moduleId: moduleId
+                    };
+                    submodules.push(newSubmodule);
+                    localStorage.setItem('submodules', JSON.stringify(submodules));
+                    populateSubmodules();
+                    document.getElementById('submodule').value = newSubmodule.id;
+                    break;
+            }
+            
+            closeModal();
+            checkFormCompletion();
+        }
+
+        // Change management
+        function addChange() {
+            const moduleId = parseInt(document.getElementById('module').value);
+            const submoduleId = parseInt(document.getElementById('submodule').value);
+            const description = document.getElementById('change-description').value.trim();
+            
+            if (!moduleId || !submoduleId || !description) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            const change = {
+                id: Date.now(),
+                moduleId: moduleId,
+                submoduleId: submoduleId,
+                description: description,
+                timestamp: new Date().toLocaleString()
+            };
+            
+            currentChanges.push(change);
+            displayChanges();
+            clearChangeForm();
+        }
+
+        function displayChanges() {
+            const container = document.getElementById('changes-container');
+            container.innerHTML = '';
+            
+            currentChanges.forEach(change => {
+                const module = modules.find(m => m.id === change.moduleId);
+                const submodule = submodules.find(s => s.id === change.submoduleId);
+                
+                const changeElement = document.createElement('div');
+                changeElement.className = 'bg-white p-5 mb-4 rounded-lg border-l-4 border-blue-500 shadow-md hover:shadow-lg hover:translate-x-1 transition-all duration-300 relative';
+                changeElement.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="text-blue-600 font-semibold">${module.name} > ${submodule.name}</div>
+                        <div class="text-blue-500 text-sm">${change.timestamp}</div>
+                    </div>
+                    <div class="text-blue-800">${change.description}</div>
+                    <button class="absolute top-2 right-2 bg-blue-600 text-white w-8 h-8 rounded-md flex items-center justify-center text-sm hover:bg-blue-700 hover:scale-110 transition-all duration-300" onclick="deleteChange(${change.id})">×</button>
+                `;
+                container.appendChild(changeElement);
+            });
+        }
+
+        function deleteChange(changeId) {
+            currentChanges = currentChanges.filter(change => change.id !== changeId);
+            displayChanges();
+        }
+
+        function clearChangeForm() {
+            document.getElementById('module').value = '';
+            document.getElementById('submodule').value = '';
+            document.getElementById('change-description').value = '';
+            populateSubmodules();
+        }
+
+        function saveMeeting() {
+            if (currentChanges.length === 0) {
+                alert('Please add at least one change');
+                return;
+            }
+            
+            const meeting = {
+                id: Date.now(),
+                projectId: parseInt(document.getElementById('project').value),
+                clientId: parseInt(document.getElementById('client').value),
+                date: document.getElementById('date').value,
+                changes: [...currentChanges],
+                timestamp: new Date().toLocaleString()
+            };
+            
+            meetings.push(meeting);
+            localStorage.setItem('meetings', JSON.stringify(meetings));
+            
+            const successMessage = document.getElementById('success-message');
+            successMessage.classList.remove('hidden');
+            setTimeout(() => {
+                successMessage.classList.add('hidden');
+            }, 5000);
+            
+            document.getElementById('project').value = '';
+            document.getElementById('client').value = '';
+            document.getElementById('date').value = '';
+            currentChanges = [];
+            document.getElementById('changes-section').classList.add('hidden');
+            displayChanges();
+        }
+
+        // Meeting History Functions
+        function displayMeetings() {
+            const container = document.getElementById('meetings-container');
+            const noMeetings = document.getElementById('no-meetings');
+            
+            if (meetings.length === 0) {
+                container.classList.add('hidden');
+                noMeetings.classList.remove('hidden');
+                return;
+            }
+            
+            container.classList.remove('hidden');
+            noMeetings.classList.add('hidden');
+            container.innerHTML = '';
+            
+            const sortedMeetings = [...meetings].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedMeetings.forEach(meeting => {
+                const project = projects.find(p => p.id === meeting.projectId);
+                const client = clients.find(c => c.id === meeting.clientId);
+                
+                const meetingCard = document.createElement('div');
+                meetingCard.className = 'bg-white rounded-lg p-6 shadow-md border-l-4 border-blue-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer';
+                meetingCard.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <div class="text-lg font-semibold text-blue-800">${project ? project.name : 'Unknown Project'}</div>
+                            <div class="text-blue-600 font-medium">Client: ${client ? client.name : 'Unknown Client'}</div>
+                        </div>
+                        <div class="text-blue-500 text-sm bg-blue-100 px-2 py-1 rounded">${formatDate(meeting.date)}</div>
+                    </div>
+                    <div class="mb-4">
+                        <div class="text-blue-600 text-sm bg-blue-100 px-2 py-1 rounded inline-block">${meeting.changes.length} change${meeting.changes.length !== 1 ? 's' : ''}</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all duration-300" onclick="viewMeetingDetails(${meeting.id})">View Details</button>
+                        <button class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300" onclick="generateMeetingReport(${meeting.id})">Generate Report</button>
+                        <button class="flex-1 bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-all duration-300" onclick="downloadMeetingCSV(${meeting.id})">Download CSV</button>
+                    </div>
+                `;
+                container.appendChild(meetingCard);
+            });
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit' 
+            }).replace(/\//g, '-');
+        }
+
+        function viewMeetingDetails(meetingId) {
+            const meeting = meetings.find(m => m.id === meetingId);
+            if (!meeting) return;
+            
+            const project = projects.find(p => p.id === meeting.projectId);
+            const client = clients.find(c => c.id === meeting.clientId);
+            
+            let detailsHTML = `
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                    <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500"><strong class="text-blue-800">Project:</strong> ${project ? project.name : 'Unknown'}</div>
+                    <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500"><strong class="text-blue-800">Client:</strong> ${client ? client.name : 'Unknown'}</div>
+                    <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500"><strong class="text-blue-800">Date:</strong> ${formatDate(meeting.date)}</div>
+                    <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500"><strong class="text-blue-800">Total Changes:</strong> ${meeting.changes.length}</div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-blue-800 mb-4">Changes Discussion:</h3>
+            `;
+            
+            meeting.changes.forEach(change => {
+                const module = modules.find(m => m.id === change.moduleId);
+                const submodule = submodules.find(s => s.id === change.submoduleId);
+                
+                detailsHTML += `
+                    <div class="bg-blue-50 p-4 mb-2 rounded-lg border-l-4 border-blue-500">
+                        <div class="font-semibold text-blue-800">${module ? module.name : 'Unknown Module'} > ${submodule ? submodule.name : 'Unknown Sub-module'}</div>
+                        <div class="text-blue-700">${change.description}</div>
+                    </div>
+                `;
+            });
+            
+            detailsHTML += '</div>';
+            
+            document.getElementById('meeting-details-content').innerHTML = detailsHTML;
+            document.getElementById('meeting-details-modal').classList.remove('hidden');
+            currentMeetingForReport = meeting;
+        }
+
+        function closeMeetingDetailsModal() {
+            document.getElementById('meeting-details-modal').classList.add('hidden');
+            currentMeetingForReport = null;
+        }
+
+        function generateReportFromDetails() {
+            if (currentMeetingForReport) {
+                generateMeetingReport(currentMeetingForReport.id);
+                closeMeetingDetailsModal();
+            }
+        }
+
+        function generateMeetingReport(meetingId) {
+            const meeting = meetings.find(m => m.id === meetingId);
+            if (!meeting) return;
+            
+            const project = projects.find(p => p.id === meeting.projectId);
+            const client = clients.find(c => c.id === meeting.clientId);
+            
+            let reportHTML = `
+                <div class="bg-white p-6 rounded-lg">
+                    <div class="text-center mb-8 pb-6 border-b-2 border-blue-500">
+                        <h2 class="text-2xl font-semibold text-blue-800">Meeting Report</h2>
+                        <p class="text-blue-600">Generated on: ${new Date().toLocaleString()}</p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                        <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500"><strong class="text-blue-800">Project:</strong> ${project ? project.name : 'Unknown'}</div>
+                        <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500"><strong class="text-blue-800">Client:</strong> ${client ? client.name : 'Unknown'}</div>
+                        <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500"><strong class="text-blue-800">Meeting Date:</strong> ${formatDate(meeting.date)}</div>
+                        <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500"><strong class="text-blue-800">Total Changes:</strong> ${meeting.changes.length}</div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-blue-800 mb-4">Changes Discussion:</h3>
+            `;
+            
+            meeting.changes.forEach(change => {
+                const module = modules.find(m => m.id === change.moduleId);
+                const submodule = submodules.find(s => s.id === change.submoduleId);
+                
+                reportHTML += `
+                    <div class="bg-blue-50 p-4 mb-2 rounded-lg border-l-4 border-blue-500">
+                        <div class="font-semibold text-blue-800">${module ? module.name : 'Unknown Module'} > ${submodule ? submodule.name : 'Unknown Sub-module'}</div>
+                        <div class="text-blue-700">${change.description}</div>
+                    </div>
+                `;
+            });
+            
+            reportHTML += `
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('report-content').innerHTML = reportHTML;
+            document.getElementById('report-modal').classList.remove('hidden');
+        }
+
+        function generateCurrentReport() {
+            if (currentChanges.length === 0) {
+                alert('Please add at least one change to generate report');
+                return;
+            }
+            
+            const project = projects.find(p => p.id === parseInt(document.getElementById('project').value));
+            const client = clients.find(c => c.id === parseInt(document.getElementById('client').value));
+            const date = document.getElementById('date').value;
+            
+            let reportHTML = `
+                <div class="bg-white p-6 rounded-lg">
+                    <div class="text-center mb-8 pb-6 border-b-2 border-blue-500">
+                        <h2 class="text-2xl font-semibold text-blue-800">Meeting Report</h2>
+                        <p class="text-blue-600">Generated on: ${new Date().toLocaleString()}</p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                        <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500"><strong class="text-blue-800">Project:</strong> ${project.name}</div>
+                        <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500"><strong class="text-blue-800">Client:</strong> ${client.name}</div>
+                        <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500"><strong class="text-blue-800">Date:</strong> ${formatDate(date)}</div>
+                        <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500"><strong class="text-blue-800">Total Changes:</strong> ${currentChanges.length}</div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-blue-800 mb-4">Changes Discussion:</h3>
+            `;
+            
+            currentChanges.forEach(change => {
+                const module = modules.find(m => m.id === change.moduleId);
+                const submodule = submodules.find(s => s.id === change.submoduleId);
+                
+                reportHTML += `
+                    <div class="bg-blue-50 p-4 mb-2 rounded-lg border-l-4 border-blue-500">
+                        <div class="font-semibold text-blue-800">${module.name} > ${submodule.name}</div>
+                        <div class="text-blue-700">${change.description}</div>
+                    </div>
+                `;
+            });
+            
+            reportHTML += `
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('report-content').innerHTML = reportHTML;
+            document.getElementById('report-modal').classList.remove('hidden');
+        }
+
+        function downloadMeetingCSV(meetingId) {
+            const meeting = meetings.find(m => m.id === meetingId);
+            if (!meeting) return;
+            
+            const project = projects.find(p => p.id === meeting.projectId);
+            const client = clients.find(c => c.id === meeting.clientId);
+            
+            let csvContent = 'data:text/csv;charset=utf-8,';
+            csvContent += 'Project,Client,Meeting Date,Module,Submodule,Description,Timestamp\n';
+            
+            meeting.changes.forEach(change => {
+                const module = modules.find(m => m.id === change.moduleId);
+                const submodule = submodules.find(s => s.id === change.submoduleId);
+                
+                const row = [
+                    `"${project ? project.name : 'Unknown'}"`,
+                    `"${client ? client.name : 'Unknown'}"`,
+                    `"${formatDate(meeting.date)}"`,
+                    `"${module ? module.name : 'Unknown Module'}"`,
+                    `"${submodule ? submodule.name : 'Unknown Sub-module'}"`,
+                    `"${change.description.replace(/"/g, '""')}"`,
+                    `"${change.timestamp}"`
+                ].join(',');
+                
+                csvContent += row + '\n';
+            });
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', `Meeting_Report_${formatDate(meeting.date)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function downloadCurrentCSV() {
+            if (currentChanges.length === 0) {
+                alert('Please add at least one change to download CSV');
+                return;
+            }
+            
+            const project = projects.find(p => p.id === parseInt(document.getElementById('project').value));
+            const client = clients.find(c => c.id === parseInt(document.getElementById('client').value));
+            const date = document.getElementById('date').value;
+            
+            let csvContent = 'data:text/csv;charset=utf-8,';
+            csvContent += 'Project,Client,Meeting Date,Module,Submodule,Description,Timestamp\n';
+            
+            currentChanges.forEach(change => {
+                const module = modules.find(m => m.id === change.moduleId);
+                const submodule = submodules.find(s => s.id === change.submoduleId);
+                
+                const row = [
+                    `"${project ? project.name : 'Unknown'}"`,
+                    `"${client ? client.name : 'Unknown'}"`,
+                    `"${formatDate(date)}"`,
+                    `"${module ? module.name : 'Unknown Module'}"`,
+                    `"${submodule ? submodule.name : 'Unknown Sub-module'}"`,
+                    `"${change.description.replace(/"/g, '""')}"`,
+                    `"${change.timestamp}"`
+                ].join(',');
+                
+                csvContent += row + '\n';
+            });
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', `Meeting_Report_${formatDate(date)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function downloadCSVFromDetails() {
+            if (currentMeetingForReport) {
+                downloadMeetingCSV(currentMeetingForReport.id);
+                closeMeetingDetailsModal();
+            }
+        }
+
+        function closeReportModal() {
+            document.getElementById('report-modal').classList.add('hidden');
+        }
+
+        function printReport() {
+            window.print();
+        }
+
+        // Initialize the application
+        window.onload = function() {
+            initializeData();
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date').value = today;
+        };
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('modal');
+            const reportModal = document.getElementById('report-modal');
+            const detailsModal = document.getElementById('meeting-details-modal');
+            
+            if (event.target === modal) {
+                closeModal();
+            }
+            if (event.target === reportModal) {
+                closeReportModal();
+            }
+            if (event.target === detailsModal) {
+                closeMeetingDetailsModal();
+            }
+        };
+
+        // Handle Enter key in modal input
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                const modal = document.getElementById('modal');
+                if (!modal.classList.contains('hidden')) {
+                    saveNewItem();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
