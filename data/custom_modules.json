@@ -1,0 +1,8 @@
+{
+  "modules": ["Request", "Attendence"],
+  "submodules": {
+    "Request": ["Gate Pass", "Missed Punch"],
+    "Attendence": ["Regulatory Docs","Calendar"]
+  }
+}
+
