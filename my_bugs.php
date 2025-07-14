@@ -3,17 +3,33 @@ require_once 'config.php';
 requireRole('tester');
 
 $status = $_GET['status'] ?? 'all';
+$search = $_GET['search'] ?? '';
 $page = max(1, intval($_GET['page'] ?? 1));
 $limit = 10;
 $offset = ($page - 1) * $limit;
 
-// Build query based on status filter
-$whereClause = "WHERE created_by = ?";
+// Build query based on status filter and search
+$whereClause = "WHERE bt.created_by = ?";
 $params = [$_SESSION['user_id']];
 
 if ($status !== 'all') {
-    $whereClause .= " AND status = ?";
+    $whereClause .= " AND bt.status = ?";
     $params[] = $status;
+}
+
+// Add search functionality
+if (!empty($search)) {
+    $whereClause .= " AND (
+        bt.title LIKE ? OR 
+        bt.description LIKE ? OR 
+        bt.priority LIKE ? OR 
+        bt.module LIKE ? OR 
+        bt.submodule LIKE ? OR 
+        u.name LIKE ? OR 
+        p.name LIKE ?
+    )";
+    $searchParam = "%$search%";
+    $params = array_merge($params, array_fill(0, 7, $searchParam));
 }
 
 // Get bugs
@@ -22,7 +38,11 @@ $totalBugs = 0;
 
 try {
     // Get total count
-    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM bug_tickets $whereClause");
+    $countQuery = "SELECT COUNT(*) as total FROM bug_tickets bt 
+                   LEFT JOIN users u ON bt.assigned_dev_id = u.id 
+                   LEFT JOIN projects p ON bt.project_id = p.id
+                   $whereClause";
+    $stmt = $pdo->prepare($countQuery);
     $stmt->execute($params);
     $totalBugs = $stmt->fetch()['total'];
 
@@ -87,7 +107,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
             }
             
             // Refresh the page to show updated status
-            header("Location: my_bugs.php?status=$status&success=" . urlencode($success));
+            $redirect_url = "my_bugs.php?status=$status";
+            if (!empty($search)) {
+                $redirect_url .= "&search=" . urlencode($search);
+            }
+            $redirect_url .= "&success=" . urlencode($success);
+            header("Location: $redirect_url");
             exit();
         } catch (PDOException $e) {
             $error = 'Failed to update bug status';
@@ -107,6 +132,115 @@ $success = $_GET['success'] ?? '';
     <link rel="stylesheet" href="assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Search Bar Styling */
+        .search-container {
+            margin-bottom: 2rem;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .search-form {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .search-input-group {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            padding-left: 2.5rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            background: #f9fafb;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            font-size: 1.1rem;
+        }
+        
+        .search-btn {
+            padding: 0.75rem 1.5rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        .search-btn:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+        
+        .clear-search {
+            padding: 0.75rem 1rem;
+            background: #f3f4f6;
+            color: #6b7280;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        .clear-search:hover {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        
+        .search-info {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: #f0f9ff;
+            border-left: 4px solid #3b82f6;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            color: #1e40af;
+        }
+        
+        .search-results-info {
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+        
+        .search-highlight {
+            background: #fef3c7;
+            padding: 0.1rem 0.2rem;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+        
         /* Professional image styling */
         .bug-screenshot {
             margin: 1rem 0;
@@ -217,6 +351,24 @@ $success = $_GET['success'] ?? '';
             margin-right: 0.5rem;
             color: #6b7280;
         }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .search-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-input-group {
+                min-width: auto;
+            }
+            
+            .search-btn,
+            .clear-search {
+                width: 100%;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -235,23 +387,59 @@ $success = $_GET['success'] ?? '';
                 </div>
             <?php endif; ?>
 
+            <!-- Search Container -->
+            <div class="search-container">
+                <form method="GET" class="search-form">
+                    <div class="search-input-group">
+                        <span class="search-icon">🔍</span>
+                        <input 
+                            type="text" 
+                            name="search" 
+                            class="search-input" 
+                            placeholder="Search by title, description, priority, module, developer, or project..."
+                            value="<?php echo htmlspecialchars($search); ?>"
+                        >
+                        <input type="hidden" name="status" value="<?php echo htmlspecialchars($status); ?>">
+                    </div>
+                    <button type="submit" class="search-btn">Search</button>
+                    <?php if (!empty($search)): ?>
+                        <a href="?status=<?php echo htmlspecialchars($status); ?>" class="clear-search">Clear</a>
+                    <?php endif; ?>
+                </form>
+                
+                <?php if (empty($search)): ?>
+                    <div class="search-info">
+                        💡 <strong>Search Tips:</strong> You can search by bug title, description, priority (high/medium/low), module name, developer name, or project name.
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <?php if (!empty($search)): ?>
+                <div class="search-results-info">
+                    Found <strong><?php echo $totalBugs; ?></strong> result(s) for "<strong><?php echo htmlspecialchars($search); ?></strong>"
+                    <?php if ($status !== 'all'): ?>
+                        with status "<strong><?php echo htmlspecialchars($status); ?></strong>"
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+
             <div class="filter-tabs">
-                <a href="?status=all" class="filter-tab <?php echo ($status == 'all') ? 'active' : ''; ?>">
+                <a href="?status=all<?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" class="filter-tab <?php echo ($status == 'all') ? 'active' : ''; ?>">
                     All Bugs (<?php echo $totalBugs; ?>)
                 </a>
-                <a href="?status=pending" class="filter-tab <?php echo ($status == 'pending') ? 'active' : ''; ?>">
+                <a href="?status=pending<?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" class="filter-tab <?php echo ($status == 'pending') ? 'active' : ''; ?>">
                     Pending
                 </a>
-                <a href="?status=in_progress" class="filter-tab <?php echo ($status == 'in_progress') ? 'active' : ''; ?>">
+                <a href="?status=in_progress<?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" class="filter-tab <?php echo ($status == 'in_progress') ? 'active' : ''; ?>">
                     In Progress
                 </a>
-                <a href="?status=fixed" class="filter-tab <?php echo ($status == 'fixed') ? 'active' : ''; ?>">
+                <a href="?status=fixed<?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" class="filter-tab <?php echo ($status == 'fixed') ? 'active' : ''; ?>">
                     Fixed (Ready for Review)
                 </a>
-                <a href="?status=approved" class="filter-tab <?php echo ($status == 'approved') ? 'active' : ''; ?>">
+                <a href="?status=approved<?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" class="filter-tab <?php echo ($status == 'approved') ? 'active' : ''; ?>">
                     Approved
                 </a>
-                <a href="?status=rejected" class="filter-tab <?php echo ($status == 'rejected') ? 'active' : ''; ?>">
+                <a href="?status=rejected<?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" class="filter-tab <?php echo ($status == 'rejected') ? 'active' : ''; ?>">
                     Rejected
                 </a>
             </div>
@@ -262,7 +450,9 @@ $success = $_GET['success'] ?? '';
                         <div class="empty-icon">🐛</div>
                         <h3>No bugs found</h3>
                         <p>
-                            <?php if ($status == 'all'): ?>
+                            <?php if (!empty($search)): ?>
+                                No bugs found matching your search criteria. Try adjusting your search terms.
+                            <?php elseif ($status == 'all'): ?>
                                 You haven't reported any bugs yet. <a href="create_bug.php">Report your first bug</a>
                             <?php else: ?>
                                 No bugs with "<?php echo $status; ?>" status found.
@@ -275,12 +465,12 @@ $success = $_GET['success'] ?? '';
                             <div class="bug-card-detailed">
                                 <div class="bug-card-header">
                                     <div class="bug-title">
-                                        <h3><?php echo htmlspecialchars($bug['title']); ?></h3>
+                                        <h3><?php echo highlightSearchTerm(htmlspecialchars($bug['title']), $search); ?></h3>
                                         <div class="bug-id">#<?php echo $bug['id']; ?></div>
                                     </div>
                                     <div class="bug-badges">
                                         <span class="priority-badge" style="background-color: <?php echo getPriorityColor($bug['priority']); ?>">
-                                            <?php echo $bug['priority']; ?>
+                                            <?php echo highlightSearchTerm($bug['priority'], $search); ?>
                                         </span>
                                         <span class="status-badge" style="background-color: <?php echo getStatusColor($bug['status']); ?>">
                                             <?php echo ucfirst(str_replace('_', ' ', $bug['status'])); ?>
@@ -289,22 +479,22 @@ $success = $_GET['success'] ?? '';
                                 </div>
 
                                 <div class="bug-description">
-                                    <p><?php echo htmlspecialchars(substr($bug['description'], 0, 200)) . (strlen($bug['description']) > 200 ? '...' : ''); ?></p>
+                                    <p><?php echo highlightSearchTerm(html_entity_decode(substr($bug['description'], 0, 200)), $search) . (strlen($bug['description']) > 200 ? '...' : ''); ?></p>
                                     
                                     <?php if ($bug['visible_impact']): ?>
                                         <div class="visible-impact">
                                             <strong>Visible Impact:</strong>
-                                            <p><?php echo htmlspecialchars($bug['visible_impact']); ?></p>
+                                            <p><?php echo highlightSearchTerm(htmlspecialchars($bug['visible_impact']), $search); ?></p>
                                         </div>
                                     <?php endif; ?>
 
                                     <div class="bug-module-info">
-                                        <strong>Module:</strong> <?php echo htmlspecialchars($bug['module'] ?? 'N/A'); ?> → <?php echo htmlspecialchars($bug['submodule'] ?? 'N/A'); ?>
+                                        <strong>Module:</strong> <?php echo highlightSearchTerm(htmlspecialchars($bug['module'] ?? 'N/A'), $search); ?> → <?php echo highlightSearchTerm(htmlspecialchars($bug['submodule'] ?? 'N/A'), $search); ?>
                                     </div>
 
                                     <!-- Project name display -->
                                     <div class="bug-project-info">
-                                        <strong>Project:</strong> <?php echo htmlspecialchars($bug['project_name'] ?? 'N/A'); ?>
+                                        <strong>Project:</strong> <?php echo highlightSearchTerm(htmlspecialchars($bug['project_name'] ?? 'N/A'), $search); ?>
                                     </div>
 
                                     <?php if ($bug['screenshot']): ?>
@@ -328,7 +518,7 @@ $success = $_GET['success'] ?? '';
                                 <div class="bug-meta">
                                     <div class="bug-developer">
                                         <strong>Assigned to:</strong> 
-                                        <?php echo $bug['developer_name'] ? htmlspecialchars($bug['developer_name']) : 'Unassigned'; ?>
+                                        <?php echo $bug['developer_name'] ? highlightSearchTerm(htmlspecialchars($bug['developer_name']), $search) : 'Unassigned'; ?>
                                     </div>
                                     <div class="bug-date">
                                         <strong>Created:</strong> <?php echo formatDate($bug['created_at']); ?>
@@ -368,18 +558,18 @@ $success = $_GET['success'] ?? '';
                     <?php if ($totalPages > 1): ?>
                         <div class="pagination">
                             <?php if ($page > 1): ?>
-                                <a href="?status=<?php echo $status; ?>&page=<?php echo $page - 1; ?>" class="pagination-btn">← Previous</a>
+                                <a href="?status=<?php echo $status; ?>&page=<?php echo $page - 1; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" class="pagination-btn">← Previous</a>
                             <?php endif; ?>
 
                             <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                                <a href="?status=<?php echo $status; ?>&page=<?php echo $i; ?>" 
+                                <a href="?status=<?php echo $status; ?>&page=<?php echo $i; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" 
                                    class="pagination-btn <?php echo ($i == $page) ? 'active' : ''; ?>">
                                     <?php echo $i; ?>
                                 </a>
                             <?php endfor; ?>
 
                             <?php if ($page < $totalPages): ?>
-                                <a href="?status=<?php echo $status; ?>&page=<?php echo $page + 1; ?>" class="pagination-btn">Next →</a>
+                                <a href="?status=<?php echo $status; ?>&page=<?php echo $page + 1; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" class="pagination-btn">Next →</a>
                             <?php endif; ?>
                         </div>
                     <?php endif; ?>
@@ -483,6 +673,29 @@ $success = $_GET['success'] ?? '';
                 closeModal();
             }
         }
+
+        // Auto-submit search form on Enter key
+        document.querySelector('.search-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.querySelector('.search-form').submit();
+            }
+        });
     </script>
 </body>
 </html>
+
+<?php
+// Helper function to highlight search terms in text
+function highlightSearchTerm($text, $search) {
+    if (empty($search) || empty($text)) {
+        return $text;
+    }
+    
+    // Escape special regex characters in search term
+    $searchEscaped = preg_quote($search, '/');
+    
+    // Perform case-insensitive highlighting
+    return preg_replace('/(' . $searchEscaped . ')/i', '<span class="search-highlight">$1</span>', $text);
+}
+?>
